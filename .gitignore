@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Local generated folders
+/outputs/
+/work/
+
+# Project backup snapshots
+backup-flat-20260727-110310/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db

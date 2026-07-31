@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Demonstracao interativa da API conversacional Cerebro da Lu."
+    >
+    <title>Cerebro da Lu | Playground da API</title>
+    <link rel="stylesheet" href="/static/styles.css?v=20260727-blue">
+    <script src="/static/app.js?v=20260727-blue" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Cerebro da Lu">
+        <span class="brand-mark" aria-hidden="true">L</span>
+        <span>
+          <strong>Cerebro da Lu</strong>
+          <small>Playground da API</small>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <span class="connection" id="connection-status" role="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          Verificando API
+        </span>
+        <button class="button button-secondary" id="new-session" type="button">
+          Nova sessao
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="scenarios" aria-labelledby="scenarios-title">
+        <div class="section-heading">
+          <p class="eyebrow">Roteiro rapido</p>
+          <h1 id="scenarios-title">Cenarios do desafio</h1>
+          <p>Execute uma jornada completa usando o mesmo endpoint.</p>
+        </div>
+
+        <div class="scenario-list">
+          <button
+            class="scenario"
+            type="button"
+            data-message="Quero adicionar 2 tenis de corrida ao meu carrinho."
+          >
+            <span class="step">01</span>
+            <span><strong>Adicionar produto</strong><small>2 tenis de corrida</small></span>
+          </button>
+          <button
+            class="scenario"
+            type="button"
+            data-message="Adicione uma bolsa preta ao carrinho."
+          >
+            <span class="step">02</span>
+            <span><strong>Continuar comprando</strong><small>1 bolsa preta</small></span>
+          </button>
+          <button
+            class="scenario"
+            type="button"
+            data-message="O que tem no meu carrinho?"
+          >
+            <span class="step">03</span>
+            <span><strong>Consultar carrinho</strong><small>Estado da sessao</small></span>
+          </button>
+          <button
+            class="scenario"
+            type="button"
+            data-message="Quero fechar o pedido e pagar no PIX."
+          >
+            <span class="step">04</span>
+            <span><strong>Checkout PIX</strong><small>Gera pedido e pagamento</small></span>
+          </button>
+          <button
+            class="scenario"
+            id="order-scenario"
+            type="button"
+            disabled
+          >
+            <span class="step">05</span>
+            <span><strong>Consultar pedido</strong><small id="order-scenario-label">Finalize uma compra antes</small></span>
+          </button>
+        </div>
+
+        <div class="session-block">
+          <label for="session-id">Session ID</label>
+          <div class="session-value">
+            <input id="session-id" autocomplete="off" spellcheck="false">
+            <button
+              class="icon-button"
+              id="copy-session"
+              type="button"
+              title="Copiar Session ID"
+              aria-label="Copiar Session ID"
+            >CC</button>
+          </div>
+          <p>O carrinho permanece vinculado a este identificador.</p>
+        </div>
+      </aside>
+
+      <section class="chat-panel" aria-labelledby="chat-title">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Agente de vendas</p>
+            <h2 id="chat-title">Conversa em tempo real</h2>
+          </div>
+          <span class="engine-badge">POST /api/v1/chat</span>
+        </div>
+
+        <div class="messages" id="messages" aria-live="polite">
+          <article class="message assistant">
+            <div class="avatar" aria-hidden="true">LU</div>
+            <div>
+              <span class="message-author">Lu</span>
+              <p>Ola! Posso montar seu carrinho, finalizar o pedido via PIX e consultar o status da compra.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="composer">
+          <label class="sr-only" for="message-input">Mensagem para o agente</label>
+          <textarea
+            id="message-input"
+            rows="1"
+            placeholder="Ex.: adicione 2 tenis ao carrinho"
+          ></textarea>
+          <button class="send-button" id="send-message" type="button">
+            <span>Enviar</span>
+            <span aria-hidden="true">-&gt;</span>
+          </button>
+          <p class="composer-hint">Enter envia. Shift + Enter quebra a linha.</p>
+        </div>
+      </section>
+
+      <aside class="inspector" aria-labelledby="inspector-title">
+        <div class="panel-header inspector-header">
+          <div>
+            <p class="eyebrow">Transparencia</p>
+            <h2 id="inspector-title">Inspector da API</h2>
+          </div>
+          <span class="http-status" id="http-status">Aguardando</span>
+        </div>
+
+        <div class="metric-row">
+          <div>
+            <span>Metodo</span>
+            <strong>POST</strong>
+          </div>
+          <div>
+            <span>Endpoint</span>
+            <strong>/api/v1/chat</strong>
+          </div>
+          <div>
+            <span>Tempo</span>
+            <strong id="request-time">--</strong>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Dados da chamada">
+          <button
+            class="tab active"
+            id="request-tab"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="request-panel"
+          >Request</button>
+          <button
+            class="tab"
+            id="response-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="response-panel"
+          >Response</button>
+        </div>
+
+        <div class="code-panel" id="request-panel" role="tabpanel" aria-labelledby="request-tab">
+          <div class="code-title">
+            <span>application/json</span>
+            <button class="text-button" id="copy-request" type="button">Copiar</button>
+          </div>
+          <pre id="request-json">{
+  "session_id": "...",
+  "message": "..."
+}</pre>
+        </div>
+        <div
+          class="code-panel"
+          id="response-panel"
+          role="tabpanel"
+          aria-labelledby="response-tab"
+          hidden
+        >
+          <div class="code-title">
+            <span>application/json</span>
+            <button class="text-button" id="copy-response" type="button">Copiar</button>
+          </div>
+          <pre id="response-json">A resposta aparecera aqui.</pre>
+        </div>
+
+        <section class="order-summary" aria-labelledby="order-title">
+          <div class="order-heading">
+            <div>
+              <p class="eyebrow">Ultima compra</p>
+              <h3 id="order-title">Pedido da sessao</h3>
+            </div>
+            <span class="order-state" id="order-state">Nenhum</span>
+          </div>
+          <dl>
+            <div>
+              <dt>ID do pedido</dt>
+              <dd id="order-id">--</dd>
+            </div>
+            <div>
+              <dt>PIX copia-e-cola</dt>
+              <dd id="pix-code">--</dd>
+            </div>
+          </dl>
+          <button class="button button-secondary full-width" id="copy-pix" type="button" disabled>
+            Copiar codigo PIX
+          </button>
+        </section>
+      </aside>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
