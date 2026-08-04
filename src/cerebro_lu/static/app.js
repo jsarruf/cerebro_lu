@@ -6,9 +6,11 @@ const elements = {
   sendButton: document.querySelector("#send-message"),
   newSession: document.querySelector("#new-session"),
   copySession: document.querySelector("#copy-session"),
-  scenarios: document.querySelectorAll("[data-message]"),
+  scenarioPanel: document.querySelector(".scenarios"),
+  scenarios: document.querySelectorAll(".scenario"),
   orderScenario: document.querySelector("#order-scenario"),
   orderScenarioLabel: document.querySelector("#order-scenario-label"),
+  engineBadge: document.querySelector("#engine-badge"),
   httpStatus: document.querySelector("#http-status"),
   requestTime: document.querySelector("#request-time"),
   requestJson: document.querySelector("#request-json"),
@@ -17,6 +19,7 @@ const elements = {
   responseTab: document.querySelector("#response-tab"),
   requestPanel: document.querySelector("#request-panel"),
   responsePanel: document.querySelector("#response-panel"),
+  inspector: document.querySelector(".inspector"),
   copyRequest: document.querySelector("#copy-request"),
   copyResponse: document.querySelector("#copy-response"),
   orderId: document.querySelector("#order-id"),
@@ -76,13 +79,17 @@ function appendMessage(role, text) {
   author.className = "message-author";
   author.textContent = role === "user" ? "Voce" : "Lu";
   const paragraph = document.createElement("p");
-  paragraph.textContent = text;
+  paragraph.textContent = role === "assistant" ? cleanAssistantText(text) : text;
 
   content.append(author, paragraph);
   article.append(avatar, content);
   elements.messages.append(article);
   elements.messages.scrollTop = elements.messages.scrollHeight;
   return article;
+}
+
+function cleanAssistantText(text) {
+  return text.replace(/\*\*(.*?)\*\*/g, "$1").replace(/`([^`]+)`/g, "$1");
 }
 
 function appendLoading() {
@@ -106,11 +113,18 @@ function setBusy(value) {
   busy = value;
   elements.sendButton.disabled = value;
   elements.messageInput.disabled = value;
-  elements.scenarios.forEach((button) => {
-    button.disabled = value;
-  });
-  elements.orderScenario.disabled = value || !lastOrderId;
+  elements.orderScenario.disabled = !lastOrderId;
   elements.sendButton.querySelector("span").textContent = value ? "Enviando" : "Enviar";
+}
+
+function updateEngineBadge(engine, model, configured = true) {
+  if (engine === "adk" && configured) {
+    elements.engineBadge.textContent = `Google ADK | ${model || "Gemini"}`;
+    elements.engineBadge.classList.remove("local");
+    return;
+  }
+  elements.engineBadge.textContent = "Motor local";
+  elements.engineBadge.classList.add("local");
 }
 
 function switchTab(name) {
@@ -125,7 +139,13 @@ function switchTab(name) {
 
 function extractOrderData(responseText) {
   const orderMatch = responseText.match(/PED-\d{8}-[0-9A-F]{6}/i);
-  const pixMatch = responseText.match(/PIX copia-e-cola:\s*([^.]+(?:\.[^.]+)*?)(?:\.\s+Esvaziei|$)/i);
+  const pixMatch =
+    responseText.match(
+      /(?:PIX copia-e-cola|c.digo PIX(?: para o pagamento)?):\s*`([^`]+)`/i,
+    ) ||
+    responseText.match(
+      /(?:PIX copia-e-cola|c.digo PIX(?: para o pagamento)?):\s*([^\r\n]+)/i,
+    ) || responseText.match(/\b(000201[^\r\n`]{60,})/i);
 
   if (orderMatch) {
     lastOrderId = orderMatch[0].toUpperCase();
@@ -137,12 +157,12 @@ function extractOrderData(responseText) {
   }
 
   if (pixMatch) {
-    lastPixCode = pixMatch[1].trim();
+    lastPixCode = pixMatch[1].replace(/\r?\n/g, "").trim();
     elements.pixCode.textContent = lastPixCode;
     elements.copyPix.disabled = false;
   }
 
-  const statusMatch = responseText.match(/status:\s*(Processando|Enviado)/i);
+  const statusMatch = responseText.match(/\b(Processando|Enviado)\b/i);
   if (statusMatch) {
     elements.orderState.textContent = statusMatch[1];
   }
@@ -189,12 +209,14 @@ async function sendMessage(message) {
     elements.httpStatus.className = `http-status ${response.ok ? "success" : "error"}`;
     elements.responseJson.textContent = JSON.stringify(data, null, 2);
     switchTab("response");
+    elements.inspector.scrollTop = 0;
 
     if (!response.ok) {
       throw new Error(data.detail ? JSON.stringify(data.detail) : "A API recusou a solicitacao.");
     }
 
     appendMessage("assistant", data.response);
+    updateEngineBadge(data.engine, data.model);
     extractOrderData(data.response);
   } catch (error) {
     loading.remove();
@@ -210,6 +232,7 @@ async function sendMessage(message) {
       "Nao consegui concluir essa chamada. Confira se a API esta ativa e tente novamente.",
     );
     switchTab("response");
+    elements.inspector.scrollTop = 0;
   } finally {
     setBusy(false);
     elements.messageInput.focus();
@@ -269,9 +292,11 @@ async function checkHealth() {
     if (!response.ok) {
       throw new Error("offline");
     }
+    const data = await response.json();
     elements.connection.classList.add("online");
     elements.connection.classList.remove("offline");
     elements.connection.lastChild.textContent = " API online";
+    updateEngineBadge(data.engine, data.model, data.google_api_configured);
   } catch {
     elements.connection.classList.add("offline");
     elements.connection.classList.remove("online");
@@ -294,9 +319,6 @@ elements.sessionId.addEventListener("change", () => {
 elements.scenarios.forEach((button) => {
   button.addEventListener("click", () => sendMessage(button.dataset.message || ""));
 });
-elements.orderScenario.addEventListener("click", () => {
-  sendMessage(elements.orderScenario.dataset.message || "");
-});
 elements.newSession.addEventListener("click", resetSession);
 elements.copySession.addEventListener("click", () =>
   copyText(elements.sessionId.value, "Session ID copiado."),
@@ -312,4 +334,6 @@ elements.requestTab.addEventListener("click", () => switchTab("request"));
 elements.responseTab.addEventListener("click", () => switchTab("response"));
 
 loadSession();
+elements.scenarioPanel.scrollTop = 0;
+elements.inspector.scrollTop = 0;
 checkHealth();

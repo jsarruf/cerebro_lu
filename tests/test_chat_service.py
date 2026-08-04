@@ -51,10 +51,11 @@ class ChatServiceTest(unittest.IsolatedAsyncioTestCase):
         )
 
         with patch.dict(os.environ, {"GOOGLE_API_KEY": "test-key"}):
-            response = await service.reply("session-1", "ola")
+            result = await service.reply_with_metadata("session-1", "ola")
 
         history = self.sales_service.get_history("session-1")
-        self.assertEqual(response, "Resposta do ADK")
+        self.assertEqual(result.response, "Resposta do ADK")
+        self.assertEqual(result.engine, "adk")
         self.assertEqual(runtime.calls, [("session-1", "ola")])
         self.assertEqual(
             [message.content for message in history],
@@ -70,10 +71,13 @@ class ChatServiceTest(unittest.IsolatedAsyncioTestCase):
         )
 
         with patch.dict(os.environ, {"GOOGLE_API_KEY": "test-key"}):
-            response = await service.reply("session-1", "adicionar 1 camiseta")
+            result = await service.reply_with_metadata(
+                "session-1", "adicionar 1 camiseta"
+            )
 
         history = self.sales_service.get_history("session-1")
-        self.assertIn("Adicionei 1 camiseta", response)
+        self.assertIn("Adicionei 1 camiseta", result.response)
+        self.assertEqual(result.engine, "local")
         self.assertEqual(len(history), 2)
 
     async def test_missing_credentials_uses_local_engine(self):

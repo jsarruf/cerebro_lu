@@ -39,6 +39,8 @@ class ChatApiTest(unittest.TestCase):
         self.assertEqual(add.status_code, 200)
         self.assertEqual(checkout.status_code, 200)
         self.assertEqual(add.json()["session_id"], "api-session-1")
+        self.assertEqual(add.json()["engine"], "local")
+        self.assertIsNone(add.json()["model"])
         self.assertIn("Adicionei 2 tenis de corrida", add.json()["response"])
         self.assertIn("PIX copia-e-cola", checkout.json()["response"])
         self.assertRegex(checkout.json()["response"], r"PED-\d{8}-[0-9A-F]{6}")
@@ -120,6 +122,14 @@ class ChatApiTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(".workspace", response.text)
+
+    def test_demo_keeps_all_scenarios_static(self):
+        page = self.client.get("/")
+        script = self.client.get("/static/app.js")
+
+        self.assertEqual(page.text.count('class="scenario"'), 5)
+        self.assertIn('querySelectorAll(".scenario")', script.text)
+        self.assertNotIn("completeScenario", script.text)
 
 
 if __name__ == "__main__":

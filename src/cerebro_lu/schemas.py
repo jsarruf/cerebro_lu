@@ -1,5 +1,7 @@
 """HTTP schemas for the conversational API."""
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -36,12 +38,17 @@ class ChatResponse(BaseModel):
 
     session_id: str
     response: str
+    engine: Literal["local", "adk"]
+    model: str | None = None
 
 
 class HealthResponse(BaseModel):
     """Health-check response."""
 
     status: str
+    engine: Literal["local", "adk"]
+    model: str | None = None
+    google_api_configured: bool
 
 
 class ErrorDetail(BaseModel):

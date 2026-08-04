@@ -165,7 +165,12 @@ async def demo() -> FileResponse:
     response_model=HealthResponse,
 )
 async def health() -> HealthResponse:
-    return HealthResponse(status="ok")
+    return HealthResponse(
+        status="ok",
+        engine=settings.chat_engine,
+        model=settings.adk_model if settings.chat_engine == "adk" else None,
+        google_api_configured=settings.has_google_api_key,
+    )
 
 
 @app.post(
@@ -192,8 +197,13 @@ async def chat(
     payload: ChatRequest,
     service: Annotated[ChatService, Depends(get_chat_service)],
 ) -> ChatResponse:
-    response = await service.reply(payload.session_id, payload.message)
-    return ChatResponse(session_id=payload.session_id, response=response)
+    result = await service.reply_with_metadata(payload.session_id, payload.message)
+    return ChatResponse(
+        session_id=payload.session_id,
+        response=result.response,
+        engine=result.engine,
+        model=settings.adk_model if result.engine == "adk" else None,
+    )
 
 
 def _error_response(status_code: int, code: str, message: str) -> JSONResponse:

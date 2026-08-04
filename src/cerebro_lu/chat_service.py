@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from time import perf_counter
+from typing import Literal
 
 from . import interpreter
 from .adk_runtime import AdkRuntime
@@ -12,6 +14,14 @@ from .services import SalesService
 from .tools import sales_service
 
 logger = get_logger("chat_service")
+
+
+@dataclass(frozen=True, slots=True)
+class ChatResult:
+    """Assistant text plus the engine that actually produced it."""
+
+    response: str
+    engine: Literal["local", "adk"]
 
 
 class ChatService:
@@ -32,8 +42,14 @@ class ChatService:
     async def reply(self, session_id: str, message: str) -> str:
         """Return one assistant response and persist both conversation sides."""
 
+        result = await self.reply_with_metadata(session_id, message)
+        return result.response
+
+    async def reply_with_metadata(self, session_id: str, message: str) -> ChatResult:
+        """Return the response and identify the engine used for this turn."""
+
         started_at = perf_counter()
-        engine = "local"
+        engine: Literal["local", "adk"] = "local"
         self._service.record_message(session_id, "user", message)
 
         if self._should_use_adk():
@@ -70,7 +86,7 @@ class ChatService:
                 "duration_ms": round((perf_counter() - started_at) * 1000, 2),
             },
         )
-        return response
+        return ChatResult(response=response, engine=engine)
 
     def _should_use_adk(self) -> bool:
         if self._settings.chat_engine != "adk":

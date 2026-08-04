@@ -153,7 +153,7 @@ Variaveis disponiveis:
 | --- | --- | --- |
 | `CHAT_ENGINE` | `local` | `local` ou `adk` |
 | `GOOGLE_API_KEY` | vazio | Obrigatoria para chamadas reais ao ADK |
-| `ADK_MODEL` | `gemini-3.6-flash` | Modelo do agente |
+| `ADK_MODEL` | `gemini-3.1-flash-lite` | Modelo do agente |
 | `ADK_TIMEOUT_SECONDS` | `30` | Timeout por turno do ADK |
 | `LOG_LEVEL` | `INFO` | Nivel do logging estruturado |
 
