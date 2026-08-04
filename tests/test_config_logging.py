@@ -12,7 +12,7 @@ class SettingsTest(unittest.TestCase):
     def test_settings_are_loaded_from_environment(self):
         environment = {
             "CHAT_ENGINE": "adk",
-            "ADK_MODEL": "gemini-2.5-flash",
+            "ADK_MODEL": "gemini-3.6-flash",
             "ADK_TIMEOUT_SECONDS": "12.5",
             "LOG_LEVEL": "warning",
             "GOOGLE_API_KEY": "secret",

@@ -19,7 +19,7 @@ class Settings:
     """Validated runtime settings."""
 
     chat_engine: ChatEngine = "local"
-    adk_model: str = "gemini-2.5-flash"
+    adk_model: str = "gemini-3.6-flash"
     adk_timeout_seconds: float = 30.0
     log_level: str = "INFO"
 
@@ -37,8 +37,8 @@ class Settings:
 
         return cls(
             chat_engine=cast(ChatEngine, engine_value),
-            adk_model=os.getenv("ADK_MODEL", "gemini-2.5-flash").strip()
-            or "gemini-2.5-flash",
+            adk_model=os.getenv("ADK_MODEL", "gemini-3.6-flash").strip()
+            or "gemini-3.6-flash",
             adk_timeout_seconds=timeout_value,
             log_level=os.getenv("LOG_LEVEL", "INFO").strip().upper() or "INFO",
         )

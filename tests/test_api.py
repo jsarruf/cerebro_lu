@@ -3,14 +3,21 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from cerebro_lu.chat_service import get_chat_service
+from cerebro_lu.chat_service import ChatService, get_chat_service
+from cerebro_lu.config import Settings
 from cerebro_lu.main import app
-from cerebro_lu.tools import store
+from cerebro_lu.repository import InMemorySalesRepository
+from cerebro_lu.services import SalesService
 
 
 class ChatApiTest(unittest.TestCase):
     def setUp(self):
-        store.reset()
+        service = SalesService(InMemorySalesRepository())
+        chat_service = ChatService(
+            settings=Settings(chat_engine="local"),
+            service=service,
+        )
+        app.dependency_overrides[get_chat_service] = lambda: chat_service
         self.client = TestClient(app)
 
     def tearDown(self):

@@ -7,7 +7,7 @@ services:
     environment:
       CHAT_ENGINE: ${CHAT_ENGINE:-local}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
-      ADK_MODEL: ${ADK_MODEL:-gemini-2.5-flash}
+      ADK_MODEL: ${ADK_MODEL:-gemini-3.6-flash}
       ADK_TIMEOUT_SECONDS: ${ADK_TIMEOUT_SECONDS:-30}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     healthcheck:
